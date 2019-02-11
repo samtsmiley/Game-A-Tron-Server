@@ -7,7 +7,6 @@ const {User} = require('./models');
 const router = express.Router();
 
 const jsonParser = bodyParser.json();
-const {words} = require('../data/words');
 
 // Post to register a new user
 router.post('/', jsonParser, (req, res) => {
@@ -118,20 +117,10 @@ router.post('/', jsonParser, (req, res) => {
       return User.create({
         username,
         password: hash,
-        firstName,
-        lastName,
-        head,
-        words: words.map((word, index) => ({
-          english: word.english,
-          dothraki: word.dothraki,
-          currentCorrect: false,
-          totalCorrect: 0,
-          totalWrong: 0,
-          totalTries:0,
-          next: index===words.length-1 ? -1 : index+1,
-          mValue: 1
-        }))
-      });
+        // firstName,
+        // lastName,
+      })
+      
     })                     
 
     .then(user => {

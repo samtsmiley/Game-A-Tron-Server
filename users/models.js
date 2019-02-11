@@ -1,8 +1,7 @@
 'use strict';
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
-const {WordSchema} = require('../words/models');
-const Game = require('../game')
+// const Game = require('../game');
 // const {words} = require('../data/words');
 //user.word.english
 
@@ -13,7 +12,7 @@ const UserSchema =  mongoose.Schema({
   password: {type: String, required: true},
   // firstName: {type: String, default: ''},
   // lastName: {type: String, default: ''},
-  games: [{gameId: mongoose.Types.Object.Id, ref: Game}]
+  // games: [{gameId: mongoose.Types.Object.Id, ref: Game}]
 });
 
 UserSchema.methods.serialize = function() {
