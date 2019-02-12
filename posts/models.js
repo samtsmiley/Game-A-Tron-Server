@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
   description: {type: String, required: true},
   userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
+  gameId: {type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true},
   value: Number
 });
 
