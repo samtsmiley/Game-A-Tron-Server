@@ -32,11 +32,6 @@ router.post('/', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    const err = new Error('The `userId` is not valid');
-    err.status = 400;
-    return next(err);
-  }
   const newGame = {name: name.trim(), admins: [userId]};
   if (description) {
     if (typeof description !== 'string' || !(description instanceof String)) {
@@ -71,6 +66,7 @@ router.post('/', (req, res, next) => {
     newGame.scores = scores.map(score => ({description: score.description, points: score.points}));
   }
 
+  // TODO: add the game to the user who created it
   Game.create(newGame)
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201))
     .catch(err => next(err));
@@ -78,11 +74,6 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
-  if (mongoose.Types.ObjectId.isValid(userId)) {
-    const err = new Error('The `userId` is not valid');
-    err.status = 400;
-    return next(err);
-  }
   const toUpdate = {};
   const updatableFields = ['name', 'description', 'rules', 'scores'];
   updatableFields.forEach(field => {
@@ -139,4 +130,20 @@ router.put('/:id', (req, res, next) => {
       if (result) res.json(result);
       else next();
     }).catch(err => next(err));
+});
+// should include a seperate put endpoint for adding participants, because you cannot be the admin of a game you're trying
+// to join (extension goal: can only join if it's public or by invite)
+router.delete(':/id', (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.user.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is invalid');
+    err.status = 400;
+    return next(err);
+  }
+
+  // TODO: remove the game from all participants
+  Game.findOneAndRemove({_id: id, admins: userId})
+    .then(() => res.sendStatus(204))
+    .catch(err => next(err));
 });
