@@ -1,15 +1,11 @@
 'use strict';
 const express = require('express');
-const bodyParser = require('body-parser');
-
 const {User} = require('./models');
 
 const router = express.Router();
 
-const jsonParser = bodyParser.json();
-
 // Post to register a new user
-router.post('/', jsonParser, (req, res) => {
+router.post('/', (req, res) => {
   const requiredFields = ['username', 'password'];
   const missingField = requiredFields.find(field => !(field in req.body));
 
@@ -22,7 +18,7 @@ router.post('/', jsonParser, (req, res) => {
     });
   }
 
-  const stringFields = ['username', 'password', 'firstName', 'lastName'];
+  const stringFields = ['username', 'password'];
   const nonStringField = stringFields.find(
     field => field in req.body && typeof req.body[field] !== 'string'
   );
@@ -92,11 +88,7 @@ router.post('/', jsonParser, (req, res) => {
     });
   }
 
-  let {head, username, password, firstName = '', lastName = ''} = req.body;
-  // Username and password come in pre-trimmed, otherwise we throw an error
-  // before this
-  firstName = firstName.trim();
-  lastName = lastName.trim();
+  let {username, password} = req.body;
 
   return User.find({username})
     .count()
@@ -117,14 +109,10 @@ router.post('/', jsonParser, (req, res) => {
       return User.create({
         username,
         password: hash,
-        // firstName,
-        // lastName,
-      })
-      
+      });
     })                     
-
     .then(user => {
-      return res.status(201).json(user.serialize());
+      return res.status(201).json(user.toJSON());
 
     })
     .catch(err => {
