@@ -9,7 +9,7 @@ const schema = new mongoose.Schema({
   endScore: {type: Number, default: null},
   posts: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
   participants: [{userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}, score: Number}],
-  admins: [{userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}}]
+  admins: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
 schema.set('timestamps', true);
