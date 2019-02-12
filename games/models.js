@@ -7,7 +7,7 @@ const schema = new mongoose.Schema({
   rules: [String],
   scores: [{description: {type: String, required: true}, points: Number}],
   endScore: {type: Number, default: null},
-  posts: [{description: {type: String, required: true}, userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}, value: Number}],
+  posts: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
   participants: [{userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}, score: Number, admin: Boolean}]
 });
 
