@@ -9,6 +9,7 @@ const { PORT, CLIENT_ORIGIN } = require('./config');
 const { dbConnect } = require('./db-mongoose');
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 const { router: userRouter } = require('./users');
+const {router: gameRouter} = require('./games');
 
 const app = express();
 const jsonParser = bodyParser.json();
@@ -31,6 +32,7 @@ passport.use(jwtStrategy);
 app.use(jsonParser);
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
+app.use('/games', gameRouter);
 
 function runServer(port = PORT) {
   const server = app
