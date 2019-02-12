@@ -1,18 +1,17 @@
 'use strict';
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
 const passport = require('passport');
-
-
 const { PORT, CLIENT_ORIGIN } = require('./config');
 const { dbConnect } = require('./db-mongoose');
-
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 const { router: userRouter } = require('./users');
 
 const app = express();
+const jsonParser = bodyParser.json();
 
 app.use(
   morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev', {
@@ -29,6 +28,7 @@ app.use(
 passport.use(localStrategy);
 passport.use(jwtStrategy);
 
+app.use(jsonParser);
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
 
