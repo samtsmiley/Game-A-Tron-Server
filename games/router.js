@@ -46,7 +46,7 @@ router.post('/', (req, res, next) => {
   console.log('validated description');
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
-      return typeof rule === 'object';
+      return (typeof rule === 'object' && rule.constructor === Object);
     })) {
       const err = new Error('The `rules` property must be an Array of Objects');
       err.status = 400;
