@@ -24,6 +24,7 @@ router.get('/:id', (req, res, next) => {
       else next();
     }).catch(err => next(err));
 });
+
 router.post('/', (req, res, next) => {
   const {name, description, rules, scores} = req.body;
   const userId = req.user.id;
@@ -45,9 +46,9 @@ router.post('/', (req, res, next) => {
   console.log('validated description');
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
-      return typeof rule === 'string';
+      return typeof rule === 'object';
     })) {
-      const err = new Error('The `rules` property must be an Array of Strings');
+      const err = new Error('The `rules` property must be an Array of Objects');
       err.status = 400;
       return next(err);
     }
@@ -76,6 +77,7 @@ router.post('/', (req, res, next) => {
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
+
 router.put('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;

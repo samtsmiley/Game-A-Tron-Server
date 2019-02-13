@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
   name: {type: String, required: true, unique: true},
   description: String,
-  rules: [String],
+  rules: [{description: {type: String, required: true}}],
   scores: [{description: {type: String, required: true}, points: Number}],
   endScore: {type: Number, default: null},
   posts: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
