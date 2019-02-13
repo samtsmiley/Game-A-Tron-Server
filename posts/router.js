@@ -31,6 +31,29 @@ router.get('/:id', (req, res, next) => {
       else next();
     }).catch(err => next(err));
 });
-router.post('/', (req, res, next) => {});
+router.post('/', (req, res, next) => {
+  const {description, gameId, value} = req.body;
+  const userId = req.user.id;
+  const newPost = {description, userId, gameId, value};
+  if (!description) {
+    const err = new Error('Missing `description` in request body');
+    err.status = 400;
+    return next(err);
+  }
+  if (!mongoose.Types.ObjectId.isValid(gameId)) {
+    const err = new Error('The `gameId` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (value && !(typeof value === 'number' && isFinite(value))) {
+    const err = new Error('The `value` field must be a Number');
+    err.status = 400;
+    return next(err);
+  }
+
+  Post.create(newPost)
+    .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
+    .catch(err => next(err));
+});
 router.put('/:id', (req, res, next) => {});
 router.delete('/:id', (req, res, next) => {});
