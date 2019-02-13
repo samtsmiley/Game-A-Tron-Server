@@ -72,10 +72,21 @@ router.post('/', (req, res, next) => {
   // console.log('validated scores');
 
   // TODO: add the game to the user who created it
-  Game.create(newGame)
-    .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
+  Game.find({name}).count()
+    .then(count => {
+      if (count > 0) return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: '`name` already taken',
+        location: 'name'
+      });
+      return Game.create(newGame);
+    }).then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
     // .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
-    .catch(err => next(err));
+    .catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err);
+      next(err);
+    });
 });
 
 router.put('/:id', (req, res, next) => {
@@ -92,12 +103,12 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
   if (toUpdate.name) {
-    toUpdate.name = toUpdate.name.trim;
     if (typeof toUpdate.name !== 'string') {
       const err = new Error('The `name` property must be a String');
       err.status = 400;
       return next(err);
     }
+    toUpdate.name = toUpdate.name.trim();
   }
   if (toUpdate.name === '') {
     const err = new Error('Missing `name` in request body');
@@ -132,11 +143,22 @@ router.put('/:id', (req, res, next) => {
     toUpdate.scores = toUpdate.scores.map(score => ({description: score.description, points: score.points}));
   }
 
-  Game.findOneAndUpdate({_id: id, admins: userId}, toUpdate, {new: true})
-    .then(result => {
+  Game.find({name: toUpdate.name}).count()
+    .then(count => {
+      if (count > 0) return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: '`name` already taken',
+        location: 'name'
+      });
+      return Game.findOneAndUpdate({_id: id, admins: userId}, toUpdate, {new: true});
+    }).then(result => {
       if (result) res.json(result);
       else next();
-    }).catch(err => next(err));
+    }).catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err);
+      next(err);
+    });
 });
 // should include a seperate put endpoint for adding participants, because you cannot be the admin of a game you're trying
 // to join (extension goal: can only join if it's public or by invite)
