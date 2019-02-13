@@ -18,7 +18,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findById(id)/*.populate('posts')*/ // TODO: uncomment the populate after posts are done
+  Game.findById(id).populate('posts')
     .then(result => {
       if (result) res.json(result);
       else next();

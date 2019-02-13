@@ -53,6 +53,7 @@ router.post('/', (req, res, next) => {
   }
 
   Post.create(newPost)
+    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}}))
     .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
     .catch(err => next(err));
 });
@@ -91,7 +92,6 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  // Post.findOneAndRemove({_id: id, userId})
   Promise.all([
     Post.findByIdAndRemove({_id: id, userId}),
     Game.updateMany({posts: id}, {$pull: {posts: id}})
