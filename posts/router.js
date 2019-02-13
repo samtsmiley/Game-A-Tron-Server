@@ -55,5 +55,30 @@ router.post('/', (req, res, next) => {
     .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
     .catch(err => next(err));
 });
-router.put('/:id', (req, res, next) => {});
+router.put('/:id', (req, res, next) => {
+  // TODO: when a post has been edited, add a flag to mark that it isn't the original
+  const id = req.params.id;
+  const userId = req.user.id;
+  const toUpdate = {};
+  const updatableFields = ['description']; // I feel like this is the only reasonable thing to update
+  updatableFields.forEach(field => {
+    if (field in req.body) toUpdate[field] = req.body[field];
+  });
+  if (toUpdate.description === '') {
+    const err = new Error('Missing `description` in request body');
+    err.status = 400;
+    return next(err);
+  }
+  if (toUpdate.description && typeof toUpdate.description !== 'string') {
+    const err = new Error('The `description` field must be a String');
+    err.status = 400;
+    return next(err);
+  }
+
+  Post.findOneAndUpdate({_id: id, userId}, toUpdate, {new: true})
+    .then(result => {
+      if (result) res.json();
+      else next();
+    }).catch(err => next(err));
+});
 router.delete('/:id', (req, res, next) => {});
