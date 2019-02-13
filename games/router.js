@@ -18,7 +18,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findById(id)/*.populate('posts')*/ // TODO: uncomment the populate after posts are done
+  Game.findById(id).populate('posts')
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -34,7 +34,7 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
   const newGame = {name: name.trim(), admins: [userId]};
-  console.log('validated name and user');
+  // console.log('validated name and user');
   if (description) {
     if (typeof description !== 'string') {
       const err = new Error('The `description` property must be a String');
@@ -43,7 +43,7 @@ router.post('/', (req, res, next) => {
     }
     newGame.description = description;
   }
-  console.log('validated description');
+  // console.log('validated description');
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
       return (typeof rule === 'object' && rule.constructor === Object);
@@ -54,7 +54,7 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
-  console.log('validated rules');
+  // console.log('validated rules');
   if (scores) {
     // check we have the correct key/value pairs
     if (!Array.isArray(scores) || !scores.every(score => {
@@ -69,12 +69,12 @@ router.post('/', (req, res, next) => {
     // make sure there aren't any extra key/value pairs
     newGame.scores = scores.map(score => ({description: score.description, points: score.points}));
   }
-  console.log('validated scores');
+  // console.log('validated scores');
 
   // TODO: add the game to the user who created it
   Game.create(newGame)
-    // .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
-    .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
+    .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
+    // .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
 
