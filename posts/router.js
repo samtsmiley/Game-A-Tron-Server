@@ -5,6 +5,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const passport = require('passport');
 const {Post} = require('./models');
+const {Game} = require('../games');
 
 router.use('/', passport.authenticate('jwt', {session: false, failWithError: true}));
 
@@ -81,4 +82,19 @@ router.put('/:id', (req, res, next) => {
       else next();
     }).catch(err => next(err));
 });
-router.delete('/:id', (req, res, next) => {});
+router.delete('/:id', (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.user.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+
+  // Post.findOneAndRemove({_id: id, userId})
+  Promise.all([
+    Post.findByIdAndRemove({_id: id, userId}),
+    Game.updateMany({posts: id}, {$pull: {posts: id}})
+  ]).then(() => res.sendStatus(204))
+    .catch(err => next(err));
+});
