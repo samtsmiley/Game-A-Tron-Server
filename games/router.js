@@ -207,6 +207,7 @@ router.delete('/:id', (req, res, next) => {
   
   // TODO: remove the game from all participants
   Game.findOneAndRemove({_id: id, admins: userId})
+    .then(() => User.updateMany({games: id}, {$pull: {games: id}}))
     .then(() => res.sendStatus(204))
     .catch(err => next(err));
 });
