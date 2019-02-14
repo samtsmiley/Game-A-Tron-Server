@@ -219,7 +219,10 @@ router.put('/join/:id', (req, res, next) => {
     }).then(results => {
       if (results[1]) res.json(results[1]);
       else next();
-    }).catch(err => next(err));
+    }).catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err);
+      next(err);
+    });
 });
 router.put('/leave/:id', (req, res, next) => {
   const id = req.params.id;
