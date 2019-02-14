@@ -235,13 +235,39 @@ router.put('/leave/:id', (req, res, next) => {
 
   Promise.all([
     User.findByIdAndUpdate(userId, {$pull: {games: id}}),
-    Game.findByIdAndUpdate(id, {$pull: {participants: {userId}}})
+    Game.findByIdAndUpdate(id, {$pull: {participants: {userId}}}, {new: true})
   ]).then(results => {
     if (results[1]) res.json(results[1]);
     else next();
   }).catch(err => next(err));
 });
-router.put('/scores/:id', (req, res, next) => {});
+router.put('/scores/:id', (req, res, next) => {
+  const id = req.params.id;
+  const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
+  // the scores for the game?
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (!mongoose.Types.ObjectId.isValid(userId)) { // validate userId here and not anywhere else because userId is from
+    // res.body and not from res.user
+    const err = new Error('The `userId` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (typeof score !== 'number' || !isFinite(score)) {
+    const err = new Error('The `score` property must be a Number');
+    err.status = 400;
+    return next(err);
+  }
+
+  Game.findOneAndUpdate({_id: id, participants: {userId}}, {'participants.$': {userId, score}}, {new: true})
+    .then(result => {
+      if (result) res.json(result);
+      else next();
+    }).catch(err => next(err));
+});
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
