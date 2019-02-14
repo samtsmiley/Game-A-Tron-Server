@@ -221,7 +221,23 @@ router.put('/join/:id', (req, res, next) => {
       else next();
     }).catch(err => next(err));
 });
-router.put('/leave/:id', (req, res, next) => {});
+router.put('/leave/:id', (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.user.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+
+  Promise.all([
+    User.findByIdAndUpdate(userId, {$pull: {games: id}}),
+    Game.findByIdAndUpdate(id, {$pull: {participants: {userId}}})
+  ]).then(results => {
+    if (results[1]) res.json(results[1]);
+    else next();
+  }).catch(err => next(err));
+});
 router.put('/scores/:id', (req, res, next) => {});
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
