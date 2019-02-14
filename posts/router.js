@@ -32,6 +32,7 @@ router.get('/:id', (req, res, next) => {
       else next();
     }).catch(err => next(err));
 });
+
 router.post('/', (req, res, next) => {
   const {description, gameId, value} = req.body;
   const userId = req.user.id;
