@@ -212,10 +212,12 @@ router.put('/join/:id', (req, res, next) => {
         reason: 'ValidationError',
         message: 'user is already a participant of game'
       });
-      return User.findByIdAndUpdate(userId, {$push: {games: id}});
-    }).then(() => Game.findByIdAndUpdate(id, {$push: {participants: {userId, score: 0}}}, {new: true}))
-    .then(result => {
-      if (result) res.json(result);
+      return Promise.all([
+        User.findByIdAndUpdate(userId, {$push: {games: id}}),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId, score: 0}}}, {new: true})
+      ]);
+    }).then(results => {
+      if (results[1]) res.json(results[1]);
       else next();
     }).catch(err => next(err));
 });
