@@ -160,8 +160,38 @@ router.put('/:id', (req, res, next) => {
       next(err);
     });
 });
-// should include a seperate put endpoint for adding participants, because you cannot be the admin of a game you're trying
-// to join (extension goal: can only join if it's public or by invite)
+// use this endpoint for updating the participants array (joining a game, leaving a game, updating scores)
+router.put('/:id/participants', (req, res, next) => {
+  const participants = req.body.participants;
+  const id = req.params.id;
+  const toUpdate = {participants};
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (!participants && participants !== []) {
+    const err = new Error('Missing `participants` in request body');
+    err.status = 400;
+    return next(err);
+  }
+  if (!Array.isArray(participants) || !participants.every(participant => {
+    if (!(typeof participant === 'object' && participant.constructor === Object)) return false;
+    return participant.hasOwnProperty('userId');
+  })) {
+    const err = new Error('The `participants` property must be an Array of Objects with a key `userId`');
+    err.status = 400;
+    return next(err);
+  }
+  // get rid of any extra keys on participants
+  toUpdate.participants = toUpdate.participants.map(participant => ({userId: participant.userId, score: participant.score}));
+
+  Game.findByIdAndUpdate(id, toUpdate, {new: true})
+    .then(result => {
+      if (result) res.json(result);
+      else next();
+    }).catch(err => next(err));
+});
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
