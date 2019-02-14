@@ -196,7 +196,29 @@ router.put('/:id', (req, res, next) => {
 //       else next();
 //     }).catch(err => next(err));
 // });
-router.put('/join/:id', (req, res, next) => {});
+router.put('/join/:id', (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.user.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  
+  Game.find({_id: id, participants: {userId}}).count()
+    .then(count => {
+      if (count > 0) return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: 'user is already a participant of game'
+      });
+      return User.findByIdAndUpdate(userId, {$push: {games: id}});
+    }).then(() => Game.findByIdAndUpdate(id, {$push: {participants: {userId, score: 0}}}, {new: true}))
+    .then(result => {
+      if (result) res.json(result);
+      else next();
+    }).catch(err => next(err));
+});
 router.put('/leave/:id', (req, res, next) => {});
 router.put('/scores/:id', (req, res, next) => {});
 router.delete('/:id', (req, res, next) => {
