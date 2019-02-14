@@ -5,6 +5,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const passport = require('passport');
 const {Game} = require('./models');
+const {User} = require('../users');
 
 router.use('/', passport.authenticate('jwt', {session:false, failWithError: true}));
 
@@ -72,6 +73,7 @@ router.post('/', (req, res, next) => {
   // console.log('validated scores');
 
   // TODO: add the game to the user who created it
+  let resultId;
   Game.find({name}).count()
     .then(count => {
       if (count > 0) return Promise.reject({
@@ -81,8 +83,10 @@ router.post('/', (req, res, next) => {
         location: 'name'
       });
       return Game.create(newGame);
-    }).then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
-    // .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
+    }).then(result => {
+      resultId = result.id;
+      return User.findOneAndUpdate({_id: userId}, {$push: {games: result.id}});
+    }).then(() => res.location(`${req.originalUrl}/${resultId}`).sendStatus(201))
     .catch(err => {
       if (err.reason === 'ValidationError') return res.status(err.code).json(err);
       next(err);
