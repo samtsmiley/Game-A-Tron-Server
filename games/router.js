@@ -9,8 +9,34 @@ const {User} = require('../users');
 
 router.use('/', passport.authenticate('jwt', {session:false, failWithError: true}));
 
-// get all games is a stretch goal
+// get all games 
+router.get('/', (req, res, next) => {
+  const { searchTerm } = req.query;
 
+  let filter = {};
+
+  if (searchTerm) {
+    const re = new RegExp(searchTerm, 'i');
+    filter.$or = [{ 'name': re }, { 'description': re }];
+  }
+
+
+  Game
+    .find(filter)
+    // .populate('tags')
+    .sort({ createdAt: 'desc' })
+    .then(results => {
+      res.json(results);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
+
+
+
+// get game by id
 router.get('/:id', (req, res, next) => {
   const id = req.params.id;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -164,6 +190,7 @@ router.put('/:id', (req, res, next) => {
       next(err);
     });
 });
+
 // use this endpoint for updating the participants array (joining a game, leaving a game, updating scores)
 // router.put('/:id/participants', (req, res, next) => {
 //   const participants = req.body.participants;
