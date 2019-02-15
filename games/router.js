@@ -258,11 +258,19 @@ router.put('/scores/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findOneAndUpdate({_id: id, participants: {userId}}, {'participants.$': {userId, score}}, {new: true})
+  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true})
     .then(result => {
       if (result) res.json(result);
-      else next();
-    }).catch(err => next(err));
+      else return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: 'user is not a participant of the game',
+        location: 'userId'
+      });
+    }).catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err); 
+      next(err);
+    });
 });
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
