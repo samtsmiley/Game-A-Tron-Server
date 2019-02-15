@@ -1,8 +1,24 @@
 'use strict';
 const express = require('express');
+const mongoose = require('mongoose');
 const {User} = require('./models');
 
 const router = express.Router();
+
+router.get('/:id', (req, res, next) => {
+  const id = req.params.id; // get id from params rather than auth so someone can view another user
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+
+  User.findById(id).populate('games')
+    .then(result => {
+      if (result) res.json(result);
+      else next();
+    }).catch(err => next(err));
+});
 
 // Post to register a new user
 router.post('/', (req, res) => {
