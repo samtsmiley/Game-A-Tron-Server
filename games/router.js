@@ -61,7 +61,6 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
   const newGame = {name: name.trim(), admins: [userId]};
-  // console.log('validated name and user');
   if (description) {
     if (typeof description !== 'string') {
       const err = new Error('The `description` property must be a String');
@@ -70,7 +69,6 @@ router.post('/', (req, res, next) => {
     }
     newGame.description = description;
   }
-  // console.log('validated description');
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
       return (typeof rule === 'object' && rule.constructor === Object);
@@ -81,7 +79,6 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
-  // console.log('validated rules');
   if (scores) {
     // check we have the correct key/value pairs
     if (!Array.isArray(scores) || !scores.every(score => {
@@ -96,9 +93,7 @@ router.post('/', (req, res, next) => {
     // make sure there aren't any extra key/value pairs
     newGame.scores = scores.map(score => ({description: score.description, points: score.points}));
   }
-  // console.log('validated scores');
 
-  // TODO: add the game to the user who created it
   let resultId;
   Game.find({name}).count()
     .then(count => {
@@ -111,7 +106,7 @@ router.post('/', (req, res, next) => {
       return Game.create(newGame);
     }).then(result => {
       resultId = result.id;
-      return User.findOneAndUpdate({_id: userId}, {$push: {games: result.id}});
+      return User.findOneAndUpdate({_id: userId}, {$push: {games: {gameId: result.id}}});
     }).then(() => res.location(`${req.originalUrl}/${resultId}`).sendStatus(201))
     .catch(err => {
       if (err.reason === 'ValidationError') return res.status(err.code).json(err);
