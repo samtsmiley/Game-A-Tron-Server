@@ -5,6 +5,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const passport = require('passport');
 const {Game} = require('./models');
+const {User} = require('../users');
 
 router.use('/', passport.authenticate('jwt', {session:false, failWithError: true}));
 
@@ -60,7 +61,6 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
   const newGame = {name: name.trim(), admins: [userId]};
-  // console.log('validated name and user');
   if (description) {
     if (typeof description !== 'string') {
       const err = new Error('The `description` property must be a String');
@@ -69,7 +69,6 @@ router.post('/', (req, res, next) => {
     }
     newGame.description = description;
   }
-  // console.log('validated description');
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
       return (typeof rule === 'object' && rule.constructor === Object);
@@ -80,7 +79,6 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
-  // console.log('validated rules');
   if (scores) {
     // check we have the correct key/value pairs
     if (!Array.isArray(scores) || !scores.every(score => {
@@ -95,9 +93,11 @@ router.post('/', (req, res, next) => {
     // make sure there aren't any extra key/value pairs
     newGame.scores = scores.map(score => ({description: score.description, points: score.points}));
   }
-  // console.log('validated scores');
 
-  // TODO: add the game to the user who created it
+  // Do we want to add the user who created the game to the game's participants array?  What if someone just wants to run
+  // a game and doesn't care to participate?  If we do add that, should it be done here or should we just call the join
+  // endpoint after the game has been created?
+  let resultId;
   Game.find({name}).count()
     .then(count => {
       if (count > 0) return Promise.reject({
@@ -106,9 +106,13 @@ router.post('/', (req, res, next) => {
         message: '`name` already taken',
         location: 'name'
       });
-      return Game.create(newGame);
-    }).then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
-    // .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
+      return Game.create(newGame); // can't use Promise.all because I need the game's id to add to the games array on the
+      // user, this means that if there's an issue with updating the user, the game will be created but the user won't have
+      // it on it's game array
+    }).then(result => {
+      resultId = result.id;
+      return User.findOneAndUpdate({_id: userId}, {$push: {games: result.id}});
+    }).then(() => res.location(`${req.originalUrl}/${resultId}`).sendStatus(201))
     .catch(err => {
       if (err.reason === 'ValidationError') return res.status(err.code).json(err);
       next(err);
@@ -187,37 +191,86 @@ router.put('/:id', (req, res, next) => {
     });
 });
 
-// use this endpoint for updating the participants array (joining a game, leaving a game, updating scores)
-router.put('/:id/participants', (req, res, next) => {
-  const participants = req.body.participants;
+router.put('/join/:id', (req, res, next) => {
   const id = req.params.id;
-  const toUpdate = {participants};
+  const userId = req.user.id;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
-  if (!participants && participants !== []) {
-    const err = new Error('Missing `participants` in request body');
+  
+  Game.find({_id: id, 'participants.userId': userId}).count()
+    .then(count => {
+      console.log(count);
+      if (count > 0) return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: 'user is already a participant of game'
+      });
+      return Promise.all([
+        User.findByIdAndUpdate(userId, {$push: {games: id}}),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
+      ]);
+    }).then(results => {
+      if (results[1]) res.json(results[1]);
+      else next();
+    }).catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err);
+      next(err);
+    });
+});
+router.put('/leave/:id', (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.user.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
-  if (!Array.isArray(participants) || !participants.every(participant => {
-    if (!(typeof participant === 'object' && participant.constructor === Object)) return false;
-    return participant.hasOwnProperty('userId');
-  })) {
-    const err = new Error('The `participants` property must be an Array of Objects with a key `userId`');
-    err.status = 400;
-    return next(err);
-  }
-  // get rid of any extra keys on participants
-  toUpdate.participants = toUpdate.participants.map(participant => ({userId: participant.userId, score: participant.score}));
 
-  Game.findByIdAndUpdate(id, toUpdate, {new: true})
+  Promise.all([
+    User.findByIdAndUpdate(userId, {$pull: {games: id}}),
+    Game.findByIdAndUpdate(id, {$pull: {participants: {userId}}}, {new: true})
+  ]).then(results => {
+    if (results[1]) res.json(results[1]);
+    else next();
+  }).catch(err => next(err));
+});
+router.put('/scores/:id', (req, res, next) => {
+  const id = req.params.id;
+  const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
+  // the scores for the game?
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (!mongoose.Types.ObjectId.isValid(userId)) { // validate userId here and not anywhere else because userId is from
+    // res.body and not from res.user
+    const err = new Error('The `userId` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+  if (typeof score !== 'number' || !isFinite(score)) {
+    const err = new Error('The `score` property must be a Number');
+    err.status = 400;
+    return next(err);
+  }
+
+  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true})
     .then(result => {
       if (result) res.json(result);
-      else next();
-    }).catch(err => next(err));
+      else return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: 'user is not a participant of the game',
+        location: 'userId'
+      });
+    }).catch(err => {
+      if (err.reason === 'ValidationError') return res.status(err.code).json(err); 
+      next(err);
+    });
 });
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
@@ -230,6 +283,7 @@ router.delete('/:id', (req, res, next) => {
   
   // TODO: remove the game from all participants
   Game.findOneAndRemove({_id: id, admins: userId})
+    .then(() => User.updateMany({games: id}, {$pull: {games: id}}))
     .then(() => res.sendStatus(204))
     .catch(err => next(err));
 });
