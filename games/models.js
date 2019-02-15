@@ -8,7 +8,7 @@ const schema = new mongoose.Schema({
   scores: [{description: {type: String, required: true}, points: Number}],
   endScore: {type: Number, default: null},
   posts: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
-  participants: [{userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}, score: Number}],
+  participants: [{userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}, score: {type: Number, default: 0}}],
   admins: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 

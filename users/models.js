@@ -7,7 +7,7 @@ mongoose.Promise = global.Promise;
 const schema = new mongoose.Schema({
   username: {type: String, required: true,unique: true},
   password: {type: String, required: true},
-  games: [{gameId: {type: mongoose.Schema.Types.ObjectId, ref: 'Game'}}]
+  games: [{type: mongoose.Schema.Types.ObjectId, ref: 'Game'}]
 });
 
 schema.set('toJSON', {
