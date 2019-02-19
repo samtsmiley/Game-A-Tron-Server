@@ -45,7 +45,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findById(id).populate('posts')
+  Game.findById(id).populate('posts').populate('participants.userId', 'username')
     .then(result => {
       if (result) res.json(result);
       else next();
