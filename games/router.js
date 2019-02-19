@@ -97,7 +97,7 @@ router.post('/', (req, res, next) => {
   // Do we want to add the user who created the game to the game's participants array?  What if someone just wants to run
   // a game and doesn't care to participate?  If we do add that, should it be done here or should we just call the join
   // endpoint after the game has been created?
-  let resultId;
+  let result;
   Game.find({name}).count()
     .then(count => {
       if (count > 0) return Promise.reject({
@@ -109,10 +109,10 @@ router.post('/', (req, res, next) => {
       return Game.create(newGame); // can't use Promise.all because I need the game's id to add to the games array on the
       // user, this means that if there's an issue with updating the user, the game will be created but the user won't have
       // it on it's game array
-    }).then(result => {
-      resultId = result.id;
+    }).then(_result => {
+      result = _result;
       return User.findOneAndUpdate({_id: userId}, {$push: {games: result.id}});
-    }).then(() => res.location(`${req.originalUrl}/${resultId}`).sendStatus(201))
+    }).then(() => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => {
       if (err.reason === 'ValidationError') return res.status(err.code).json(err);
       next(err);
