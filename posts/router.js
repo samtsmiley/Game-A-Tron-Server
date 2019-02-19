@@ -55,7 +55,7 @@ router.post('/', (req, res, next) => {
 
   Post.create(newPost)
     .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}}))
-    .then(result => res.location(`${req.originalUrl}/${result.id}`).sendStatus(201))
+    .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
 router.put('/:id', (req, res, next) => {
