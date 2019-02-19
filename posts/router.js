@@ -26,7 +26,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
   
-  Post.findOne({_id: id, userId})
+  Post.findOne({_id: id, userId}).populate('gameId', 'name')
     .then(result => {
       if (result) res.json(result);
       else next();
