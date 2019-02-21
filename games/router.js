@@ -45,7 +45,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findById(id).populate('posts').populate('participants.userId', 'username')
+  Game.findById(id).populate('posts').populate({path: 'participants.userId posts', select: 'username description userId value createdAt'})
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -53,7 +53,7 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-  const {name, description, rules, scores} = req.body;
+  const {name, description, rules, scores, endScore} = req.body;
   const userId = req.user.id;
   if (!name) {
     const err = new Error('Missing `name` in request body');
@@ -68,7 +68,17 @@ router.post('/', (req, res, next) => {
       return next(err);
     }
     newGame.description = description;
+  
   }
+  if (endScore) {
+    if (typeof parseInt(endScore) !== 'number') {
+      const err = new Error('The `endScore` property must be a Number');
+      err.status = 400;
+      return next(err);
+    }
+    newGame.endScore = parseInt(endScore);
+  }
+  
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
       return (typeof rule === 'object' && rule.constructor === Object);
@@ -79,6 +89,8 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
+
+
   if (scores) {
     // check we have the correct key/value pairs
     if (!Array.isArray(scores) || !scores.every(score => {
@@ -209,16 +221,19 @@ router.put('/join/:id', (req, res, next) => {
         message: 'user is already a participant of game'
       });
       return User.findById(userId);
+
+      // Game.findById(id).populate('posts').populate('participants.userId', 'username')
     }).then(result => {
-      console.log(result);
+      // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
         Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
       ]);
-    }).then(results => {
+    })
+    .then(results => {
       if (results[0]) res.json(results[0]);
       else next();
     }).catch(err => {
@@ -226,6 +241,8 @@ router.put('/join/:id', (req, res, next) => {
       next(err);
     });
 });
+
+
 router.put('/leave/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
@@ -243,7 +260,9 @@ router.put('/leave/:id', (req, res, next) => {
     else next();
   }).catch(err => next(err));
 });
+
 router.put('/scores/:id', (req, res, next) => {
+  console.log('i made it to scores/:id');
   const id = req.params.id;
   const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
   // the scores for the game?
