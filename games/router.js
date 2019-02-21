@@ -45,7 +45,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findById(id).populate('posts').populate('participants.userId', 'username')
+  Game.findById(id).populate('posts').populate({path: 'participants.userId posts', select: 'username description userId value createdAt'})
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -226,8 +226,7 @@ router.put('/join/:id', (req, res, next) => {
     }).then(result => {
       // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}),
-        Game.findById(id).populate('posts').populate('participants.userId', 'username'),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
