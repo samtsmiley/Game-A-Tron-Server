@@ -53,7 +53,7 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-  const {name, description, rules, scores} = req.body;
+  const {name, description, rules, scores, endScore} = req.body;
   const userId = req.user.id;
   if (!name) {
     const err = new Error('Missing `name` in request body');
@@ -68,7 +68,17 @@ router.post('/', (req, res, next) => {
       return next(err);
     }
     newGame.description = description;
+  
   }
+  if (endScore) {
+    if (typeof parseInt(endScore) !== 'number') {
+      const err = new Error('The `endScore` property must be a Number');
+      err.status = 400;
+      return next(err);
+    }
+    newGame.endScore = parseInt(endScore);
+  }
+  
   if (rules) {
     if (!Array.isArray(rules) || !rules.every(rule => {
       return (typeof rule === 'object' && rule.constructor === Object);
@@ -79,6 +89,8 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
+
+
   if (scores) {
     // check we have the correct key/value pairs
     if (!Array.isArray(scores) || !scores.every(score => {
