@@ -209,16 +209,20 @@ router.put('/join/:id', (req, res, next) => {
         message: 'user is already a participant of game'
       });
       return User.findById(userId);
+
+      // Game.findById(id).populate('posts').populate('participants.userId', 'username')
     }).then(result => {
-      console.log(result);
+      // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
         Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}),
+        Game.findById(id).populate('posts').populate('participants.userId', 'username'),
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
         Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
       ]);
-    }).then(results => {
+    })
+    .then(results => {
       if (results[0]) res.json(results[0]);
       else next();
     }).catch(err => {
@@ -226,6 +230,8 @@ router.put('/join/:id', (req, res, next) => {
       next(err);
     });
 });
+
+
 router.put('/leave/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
@@ -243,7 +249,9 @@ router.put('/leave/:id', (req, res, next) => {
     else next();
   }).catch(err => next(err));
 });
+
 router.put('/scores/:id', (req, res, next) => {
+  console.log('i made it to scores/:id');
   const id = req.params.id;
   const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
   // the scores for the game?
