@@ -8,7 +8,7 @@ const schema = new mongoose.Schema({
   username: {type: String, required: true,unique: true},
   password: {type: String, required: true},
   games: [{type: mongoose.Schema.Types.ObjectId, ref: 'Game'}],
-  email: String,
+  email: {type: String, unique: true},
   confirmed: {type: Boolean, default: false}
 });
 
