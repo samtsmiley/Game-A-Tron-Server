@@ -22,3 +22,22 @@ router.post('/', (req, res, next) => {
       }
     }).catch(err => next(err));
 });
+
+router.get('/confirm/:id', (req, res, next) => {
+  const id = req.params.id;
+
+  User.findById(id)
+    .then(user => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        return next(err);
+      } else if (!user.confirmed) {
+        User.findByIdAndUpdate(id, {confirmed: true}, {new: true})
+          .then(() => res.json({message: 'Your email is confirmed'}))
+          .catch(err => next(err));
+      } else {
+        res.json({message: 'Your email has already been confirmed'});
+      }
+    }).catch(err => next(err));
+});
