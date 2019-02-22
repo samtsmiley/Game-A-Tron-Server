@@ -22,7 +22,7 @@ router.get('/:id', (req, res, next) => {
 
 // Post to register a new user
 router.post('/', (req, res) => {
-  const requiredFields = ['username', 'password', 'email'];
+  const requiredFields = ['username', 'password'];
   const missingField = requiredFields.find(field => !(field in req.body));
 
   if (missingField) {
