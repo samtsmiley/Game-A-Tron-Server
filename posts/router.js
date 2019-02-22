@@ -7,6 +7,16 @@ const passport = require('passport');
 const {Post} = require('./models');
 const {Game} = require('../games');
 
+//image upload stuff
+const cloudinary = require('cloudinary');
+const formData = require('express-form-data');
+ 
+cloudinary.config({ 
+  cloud_name: process.env.CLOUD_NAME, 
+  api_key: process.env.API_KEY, 
+  api_secret: process.env.API_SECRET
+});
+
 router.use('/', passport.authenticate('jwt', {session: false, failWithError: true}));
 
 router.get('/', (req, res, next) => {

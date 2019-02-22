@@ -11,7 +11,8 @@ const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 const { router: userRouter } = require('./users');
 const {router: gameRouter} = require('./games');
 const {router: postRouter} = require('./posts');
-
+const {router: imageRouter} = require('./images/router');
+ 
 const app = express();
 const jsonParser = bodyParser.json();
 
@@ -27,14 +28,19 @@ app.use(
   })
 );
 
+
+//image post
+app.use(jsonParser);
+ 
 passport.use(localStrategy);
 passport.use(jwtStrategy);
-
-app.use(jsonParser);
+ 
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/games', gameRouter);
 app.use('/posts', postRouter);
+app.use('/image-upload', imageRouter);
+
 
 function runServer(port = PORT) {
   const server = app
