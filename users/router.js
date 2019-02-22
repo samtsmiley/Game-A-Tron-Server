@@ -121,9 +121,10 @@ router.post('/', (req, res) => {
       }
       // If there is no existing user, hash the password
       // return User.hashPassword(password);
+      console.log(email);
       return User.find({email}).count();
     }).then(count => {
-      if (count > 0) return Promise.reject({
+      if (count > 0 && email) return Promise.reject({
         code: 422,
         reason: 'ValidationError',
         message: 'Email already taken',
@@ -132,11 +133,9 @@ router.post('/', (req, res) => {
       return User.hashPassword(password);
     })
     .then(hash => {
-      return User.create({
-        username,
-        password: hash,
-        email
-      });
+      const newUser = {username, password: hash};
+      if (email) newUser.email = email;
+      return User.create(newUser);
     })                     
     .then(user => {
       return res.status(201).json(user.toJSON());
