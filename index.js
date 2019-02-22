@@ -11,6 +11,7 @@ const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 const { router: userRouter } = require('./users');
 const {router: gameRouter} = require('./games');
 const {router: postRouter} = require('./posts');
+const {router: emailRouter} = require('./email');
 
 const app = express();
 const jsonParser = bodyParser.json();
@@ -35,6 +36,7 @@ app.use('/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/games', gameRouter);
 app.use('/posts', postRouter);
+app.use('/email', emailRouter);
 
 function runServer(port = PORT) {
   const server = app
