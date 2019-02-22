@@ -56,8 +56,9 @@ router.post('/', (req, res) => {
   // We'll silently trim the other fields, because they aren't credentials used
   // to log in, so it's less of a problem.
   const explicityTrimmedFields = ['username', 'password', 'email'];
-  const nonTrimmedField = explicityTrimmedFields.find(
-    field => req.body[field].trim() !== req.body[field]
+  const nonTrimmedField = explicityTrimmedFields.find(field => {
+    if (req.body[field]) return req.body[field].trim() !== req.body[field];
+  }
   );
 
   if (nonTrimmedField) {
