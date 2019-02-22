@@ -214,7 +214,7 @@ router.put('/join/:id', (req, res, next) => {
   
   Game.find({_id: id, 'participants.userId': userId}).count()
     .then(count => {
-      console.log(count);
+      console.log('count',count);
       if (count > 0) return Promise.reject({
         code: 422,
         reason: 'ValidationError',
@@ -226,11 +226,13 @@ router.put('/join/:id', (req, res, next) => {
     }).then(result => {
       // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'}),
+        // Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
+
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'})
       ]);
     })
     .then(results => {
@@ -283,7 +285,7 @@ router.put('/scores/:id', (req, res, next) => {
     return next(err);
   }
 
-  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true})
+  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'})
     .then(result => {
       if (result) res.json(result);
       else return Promise.reject({
@@ -297,6 +299,9 @@ router.put('/scores/:id', (req, res, next) => {
       next(err);
     });
 });
+
+
+
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
