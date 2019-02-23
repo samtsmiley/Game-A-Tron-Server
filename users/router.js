@@ -34,7 +34,7 @@ router.post('/', (req, res) => {
     });
   }
 
-  const stringFields = ['username', 'password'];
+  const stringFields = ['username', 'password', 'email'];
   const nonStringField = stringFields.find(
     field => field in req.body && typeof req.body[field] !== 'string'
   );
@@ -55,9 +55,10 @@ router.post('/', (req, res) => {
   // trimming them and expecting the user to understand.
   // We'll silently trim the other fields, because they aren't credentials used
   // to log in, so it's less of a problem.
-  const explicityTrimmedFields = ['username', 'password'];
-  const nonTrimmedField = explicityTrimmedFields.find(
-    field => req.body[field].trim() !== req.body[field]
+  const explicityTrimmedFields = ['username', 'password', 'email'];
+  const nonTrimmedField = explicityTrimmedFields.find(field => {
+    if (req.body[field]) return req.body[field].trim() !== req.body[field];
+  }
   );
 
   if (nonTrimmedField) {
@@ -104,7 +105,7 @@ router.post('/', (req, res) => {
     });
   }
 
-  let {username, password} = req.body;
+  let {username, password, email} = req.body;
 
   return User.find({username})
     .count()
@@ -119,13 +120,22 @@ router.post('/', (req, res) => {
         });
       }
       // If there is no existing user, hash the password
+      // return User.hashPassword(password);
+      console.log(email);
+      return User.find({email}).count();
+    }).then(count => {
+      if (count > 0 && email) return Promise.reject({
+        code: 422,
+        reason: 'ValidationError',
+        message: 'Email already taken',
+        location: 'email'
+      });
       return User.hashPassword(password);
     })
     .then(hash => {
-      return User.create({
-        username,
-        password: hash,
-      });
+      const newUser = {username, password: hash};
+      if (email) newUser.email = email;
+      return User.create(newUser);
     })                     
     .then(user => {
       return res.status(201).json(user.toJSON());

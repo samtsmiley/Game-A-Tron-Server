@@ -13,6 +13,8 @@ const {router: gameRouter} = require('./games');
 const {router: postRouter} = require('./posts');
 const {router: imageRouter} = require('./images/router');
  
+const {router: emailRouter} = require('./email');
+
 const app = express();
 const jsonParser = bodyParser.json();
 
@@ -41,6 +43,7 @@ app.use('/games', gameRouter);
 app.use('/posts', postRouter);
 app.use('/image-upload', imageRouter);
 
+app.use('/email', emailRouter);
 
 function runServer(port = PORT) {
   const server = app
