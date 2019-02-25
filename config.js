@@ -13,6 +13,7 @@ module.exports = {
   TEST_DATABASE_URL:
         process.env.TEST_DATABASE_URL ||
         'mongodb://localhost/thinkful-backend-test',
+  CLOUDINARY_URL:process.env.CLOUDINARY_URL,
   MAIL_USER: process.env.MAIL_USER,
   MAIL_PASS: process.env.MAIL_PASS
   // DATABASE_URL:
