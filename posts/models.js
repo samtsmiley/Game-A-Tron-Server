@@ -5,7 +5,10 @@ const schema = new mongoose.Schema({
   description: {type: String, required: true},
   userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
   gameId: {type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true},
-  value: Number
+  value: Number,
+  comment: {type: String, required: false},
+  image: {type: String, required: false},
+  imageId: {type: String, required: false}
   // TODO: add a boolean for if a post has been edited
 });
 

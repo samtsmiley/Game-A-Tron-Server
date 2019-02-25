@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const {Post} = require('./models');
 const {Game} = require('../games');
-
+ 
 router.use('/', passport.authenticate('jwt', {session: false, failWithError: true}));
 
 router.get('/', (req, res, next) => {
@@ -34,9 +34,12 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-  const {description, gameId, value} = req.body;
+  const {description, gameId, value, comment, image, imageId} = req.body;
   const userId = req.user.id;
-  const newPost = {description, userId, gameId, value};
+  const newPost = {description, userId, gameId, value, comment, image, imageId};
+
+  console.log('check>>>: ',description, gameId, value, comment, image, imageId);
+
   if (!description) {
     const err = new Error('Missing `description` in request body');
     err.status = 400;
