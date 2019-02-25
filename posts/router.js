@@ -14,8 +14,12 @@ router.use('/', passport.authenticate('jwt', {session: false, failWithError: tru
 router.get('/', (req, res, next) => {
   // get all posts for a user
   const userId = req.query.userId;
-
-  Post.find({userId}).sort({updatedAt: 'desc'})
+  const populatePost = {
+    path: 'gameId',
+    model: 'Game',
+    select: 'name'
+  };
+  Post.find({userId}).sort({updatedAt: 'desc'}).populate(populatePost)
     .then(results => res.json(results))
     .catch(err => next(err));
 });
@@ -28,26 +32,7 @@ router.get('/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  // const populateGame = {
-  //   path: 'gameId',
-  //   populate: {
-  //     path: 'gameId',
-  //     model: 'Game',
-  //     select: 'name'
-  //   }
-  // };
-  const populatePosts = {
-    path: 'posts',
-    populate: {
-      path: 'userId',
-      model: 'User',
-      select: 'username'
-    }
-  };
-  // Post.findOne({_id: id, userId}).populate(populateGame)
-  // Post.findOne({_id: id, userId}).populate('gameId')
-  Post.findOne({_id: id, userId}).populate({path: 'gameId', model:'Game', select: 'name'})
-
+  Post.findOne({_id: id, userId}).populate('gameId name')
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -60,7 +45,7 @@ router.post('/', (req, res, next) => {
   const userId = req.user.id;
   const newPost = {description, userId, gameId, value, comment, image, imageId};
 
-  console.log('check>>>: ',description, gameId, value, comment, image, imageId);
+  // console.log('check>>>: ',description, gameId, value, comment, image, imageId);
 
   if (!description) {
     const err = new Error('Missing `description` in request body');
@@ -77,26 +62,26 @@ router.post('/', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  // const populatePosts = {
-  //   path: 'posts',
-  //   populate: {
-  //     path: 'userId',
-  //     model: 'User',
-  //     select: 'username'
-  //   }
-  // };
   const populatePosts = {
     path: 'posts',
     populate: {
-      path: 'gameId',
-      model: 'Game',
-      select: 'name'
+      path: 'userId',
+      model: 'User',
+      select: 'username'
     }
   };
+  // const populatePosts = {
+  //   path: 'posts',
+  //   populate: {
+  //     path: 'gameId',
+  //     model: 'Game',
+  //     select: 'name'
+  //   }
+  // };
   Post.create(newPost)
-    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))  
+    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))  
     // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate({path: 'posts.userId', model:'User', select: 'username'}).populate({path: 'participants.userId', model:'User', select: 'username'}))    
-    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins posts').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))    
+    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins posts').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))    
 
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
