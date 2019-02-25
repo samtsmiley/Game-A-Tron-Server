@@ -121,7 +121,7 @@ router.post('/', (req, res) => {
       }
       // If there is no existing user, hash the password
       // return User.hashPassword(password);
-      console.log(email);
+      // console.log(email);
       return User.find({email}).count();
     }).then(count => {
       if (count > 0 && email) return Promise.reject({

@@ -229,7 +229,7 @@ router.put('/join/:id', (req, res, next) => {
   };
   Game.find({_id: id, 'participants.userId': userId}).count()
     .then(count => {
-      console.log('count',count);
+      // console.log('count',count);
       if (count > 0) return Promise.reject({
         code: 422,
         reason: 'ValidationError',
@@ -281,7 +281,7 @@ router.put('/leave/:id', (req, res, next) => {
 });
 
 router.put('/scores/:id', (req, res, next) => {
-  console.log('i made it to scores/:id');
+  // console.log('i made it to scores/:id');
   const id = req.params.id;
   const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
   // the scores for the game?
