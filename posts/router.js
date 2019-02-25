@@ -70,19 +70,9 @@ router.post('/', (req, res, next) => {
       select: 'username'
     }
   };
-  // const populatePosts = {
-  //   path: 'posts',
-  //   populate: {
-  //     path: 'gameId',
-  //     model: 'Game',
-  //     select: 'name'
-  //   }
-  // };
+ 
   Post.create(newPost)
     .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))  
-    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate({path: 'posts.userId', model:'User', select: 'username'}).populate({path: 'participants.userId', model:'User', select: 'username'}))    
-    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins posts').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))    
-
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
