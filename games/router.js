@@ -44,8 +44,16 @@ router.get('/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
+  const populatePosts = {
+    path: 'posts',
+    populate: {
+      path: 'userId',
+      model: 'User',
+      select: 'username'
+    }
+  };
+  Game.findById(id).populate(populatePosts).populate({path: 'participants.userId', select: 'username description userId value createdAt'})
 
-  Game.findById(id).populate('posts').populate({path: 'participants.userId posts', select: 'username description userId value createdAt'})
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -211,28 +219,37 @@ router.put('/join/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  
+  const populatePosts = {
+    path: 'posts',
+    populate: {
+      path: 'userId',
+      model: 'User',
+      select: 'username'
+    }
+  };
   Game.find({_id: id, 'participants.userId': userId}).count()
     .then(count => {
-      console.log('count',count);
+      // console.log('count',count);
       if (count > 0) return Promise.reject({
         code: 422,
         reason: 'ValidationError',
         message: 'user is already a participant of game'
       });
+
+
       return User.findById(userId);
 
       // Game.findById(id).populate('posts').populate('participants.userId', 'username')
     }).then(result => {
       // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'}),
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}),
         // Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
 
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'})
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'})
       ]);
     })
     .then(results => {
@@ -264,7 +281,7 @@ router.put('/leave/:id', (req, res, next) => {
 });
 
 router.put('/scores/:id', (req, res, next) => {
-  console.log('i made it to scores/:id');
+  // console.log('i made it to scores/:id');
   const id = req.params.id;
   const {userId, score} = req.body; // userId is in req.body and not req.user because maybe another user is maintaining
   // the scores for the game?
