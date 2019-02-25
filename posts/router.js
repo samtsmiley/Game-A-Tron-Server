@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const {Post} = require('./models');
 const {Game} = require('../games');
+// const {User} = require('../user');
+
 
 router.use('/', passport.authenticate('jwt', {session: false, failWithError: true}));
 
@@ -17,6 +19,7 @@ router.get('/', (req, res, next) => {
     .then(results => res.json(results))
     .catch(err => next(err));
 });
+
 router.get('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
@@ -25,13 +28,32 @@ router.get('/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  
-  Post.findOne({_id: id, userId}).populate('gameId', 'name')
+  // const populateGame = {
+  //   path: 'gameId',
+  //   populate: {
+  //     path: 'gameId',
+  //     model: 'Game',
+  //     select: 'name'
+  //   }
+  // };
+  const populatePosts = {
+    path: 'posts',
+    populate: {
+      path: 'userId',
+      model: 'User',
+      select: 'username'
+    }
+  };
+  // Post.findOne({_id: id, userId}).populate(populateGame)
+  // Post.findOne({_id: id, userId}).populate('gameId')
+  Post.findOne({_id: id, userId}).populate({path: 'gameId', model:'Game', select: 'name'})
+
     .then(result => {
       if (result) res.json(result);
       else next();
     }).catch(err => next(err));
 });
+
 
 router.post('/', (req, res, next) => {
   const {description, gameId, value} = req.body;
@@ -52,12 +74,32 @@ router.post('/', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-
+  // const populatePosts = {
+  //   path: 'posts',
+  //   populate: {
+  //     path: 'userId',
+  //     model: 'User',
+  //     select: 'username'
+  //   }
+  // };
+  const populatePosts = {
+    path: 'posts',
+    populate: {
+      path: 'gameId',
+      model: 'Game',
+      select: 'name'
+    }
+  };
   Post.create(newPost)
-    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}}))
+    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))  
+    // .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate({path: 'posts.userId', model:'User', select: 'username'}).populate({path: 'participants.userId', model:'User', select: 'username'}))    
+    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins posts').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))    
+
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
+
+
 router.put('/:id', (req, res, next) => {
   // TODO: when a post has been edited, add a flag to mark that it isn't the original
   const id = req.params.id;
