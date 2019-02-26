@@ -20,10 +20,8 @@ router.get('/', (req, res, next) => {
     filter.$or = [{ 'name': re }, { 'description': re }];
   }
 
-
   Game
     .find(filter)
-    // .populate('tags')
     .sort({ createdAt: 'desc' })
     .then(results => {
       res.json(results);
@@ -32,8 +30,6 @@ router.get('/', (req, res, next) => {
       next(err);
     });
 });
-
-
 
 
 // get game by id
@@ -52,8 +48,9 @@ router.get('/:id', (req, res, next) => {
       select: 'username'
     }
   };
-  Game.findById(id).populate(populatePosts).populate({path: 'participants.userId', select: 'username description userId value createdAt'})
-
+  Game.findById(id)
+    .populate(populatePosts)
+    .populate({path: 'participants.userId', select: 'username description userId value createdAt'})
     .then(result => {
       if (result) res.json(result);
       else next();
@@ -76,7 +73,6 @@ router.post('/', (req, res, next) => {
       return next(err);
     }
     newGame.description = description;
-  
   }
   if (endScore) {
     if (typeof parseInt(endScore) !== 'number') {
@@ -97,7 +93,6 @@ router.post('/', (req, res, next) => {
     }
     newGame.rules = rules;
   }
-
 
   if (scores) {
     // check we have the correct key/value pairs
@@ -235,21 +230,18 @@ router.put('/join/:id', (req, res, next) => {
         reason: 'ValidationError',
         message: 'user is already a participant of game'
       });
-
-
       return User.findById(userId);
-
-      // Game.findById(id).populate('posts').populate('participants.userId', 'username')
     }).then(result => {
-      // console.log(result);
       if (result.games.every(game => !game.equals(id))) return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}),
-        // Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate({path: 'participants.userId posts', select: 'username description userId value createdAt'}),
-
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
+          .populate('admins').populate(populatePosts)
+          .populate({path: 'participants.userId', model:'User', select: 'username'}),
         User.findByIdAndUpdate(userId, {$push: {games: id}})
       ]);
       return Promise.all([
-        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true}).populate('posts admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'})
+        Game.findByIdAndUpdate(id, {$push: {participants: {userId}}}, {new: true})
+          .populate('admins').populate(populatePosts)
+          .populate({path: 'participants.userId', model:'User', select: 'username'})
       ]);
     })
     .then(results => {
@@ -260,7 +252,6 @@ router.put('/join/:id', (req, res, next) => {
       next(err);
     });
 });
-
 
 router.put('/leave/:id', (req, res, next) => {
   const id = req.params.id;
@@ -301,8 +292,17 @@ router.put('/scores/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-
-  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true}).populate('posts admins').populate({path: 'participants.userId', model:'User', select: 'username'})
+  const populatePosts = {
+    path: 'posts',
+    populate: {
+      path: 'userId',
+      model: 'User',
+      select: 'username'
+    }
+  };
+  Game.findOneAndUpdate({_id: id, 'participants.userId': userId}, {'participants.$': {userId, score}}, {new: true})
+    .populate('admins').populate(populatePosts)
+    .populate({path: 'participants.userId', model:'User', select: 'username'})
     .then(result => {
       if (result) res.json(result);
       else return Promise.reject({
@@ -316,8 +316,6 @@ router.put('/scores/:id', (req, res, next) => {
       next(err);
     });
 });
-
-
 
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;

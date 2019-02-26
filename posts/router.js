@@ -6,8 +6,6 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const {Post} = require('./models');
 const {Game} = require('../games');
-// const {User} = require('../user');
-
 
 router.use('/', passport.authenticate('jwt', {session: false, failWithError: true}));
 
@@ -45,8 +43,6 @@ router.post('/', (req, res, next) => {
   const userId = req.user.id;
   const newPost = {description, userId, gameId, value, comment, image, imageId};
 
-  // console.log('check>>>: ',description, gameId, value, comment, image, imageId);
-
   if (!description) {
     const err = new Error('Missing `description` in request body');
     err.status = 400;
@@ -72,11 +68,12 @@ router.post('/', (req, res, next) => {
   };
  
   Post.create(newPost)
-    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true}).populate('admins').populate(populatePosts).populate({path: 'participants.userId', model:'User', select: 'username'}))  
+    .then(result => Game.findOneAndUpdate({_id: result.gameId}, {$push: {posts: result.id}},{new:true})
+      .populate('admins').populate(populatePosts)
+      .populate({path: 'participants.userId', model:'User', select: 'username'}))  
     .then(result => res.location(`${req.originalUrl}/${result.id}`).status(201).json(result))
     .catch(err => next(err));
 });
-
 
 router.put('/:id', (req, res, next) => {
   // TODO: when a post has been edited, add a flag to mark that it isn't the original
