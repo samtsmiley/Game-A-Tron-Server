@@ -8,6 +8,7 @@
       { "src": "/(.*)", "dest": "index.js" }
   ],
   "env": {
+    "CLIENT_ORIGIN": "game-a-tron.netlify.com",
     "JWT_SECRET": "popcorn",
     "MAIL_USER": "opensourcerers26@gmail.com",
     "MAIL_PASS": "Th!nkful",
