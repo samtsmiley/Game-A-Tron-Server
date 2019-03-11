@@ -6,5 +6,14 @@
   ],
   "routes": [
       { "src": "/(.*)", "dest": "index.js" }
-  ]
+  ],
+  "env": {
+    "JWT_SECRET": "popcorn",
+    "MAIL_USER": "opensourcerers26@gmail.com",
+    "MAIL_PASS": "Th!nkful",
+    "CLOUD_NAME": "dkj7loacb",
+    "API_KEY": "158229432222277",
+    "API_SECRET": "fj3Lh5blcI2mYf_S7TVee7PAPTE",
+    "CLOUDINARY_URL": "cloudinary://158229432222277:fj3Lh5blcI2mYf_S7TVee7PAPTE@dkj7loacb"
+  }
 }
