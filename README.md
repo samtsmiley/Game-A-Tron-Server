@@ -147,7 +147,7 @@ This endpoint takes in the username and verifies the password. When validated, t
 ### Posts
 `GET` request to `/` will return an array of all posts data belonging to a user.
 
-`POST` request to `/` will create an post document. This will used to populate other responses. It accepts the following request body,
+`POST` request to `/` will create a post document. This will used to populate other responses. It accepts the following request body,
 ```
 {
   description, 
